@@ -1,0 +1,62 @@
+# If you are referencing Malpedia in a publication, please cite the Botconf Journal paper
+# 
+# Here's the raw citation:
+#
+#   Plohmann, D., Clauss, M., Enders, S., Padilla, E. 
+#   Malpedia: A Collaborative Effort to Inventorize the Malware Landscape. 
+#   The Journal on Cybercrime & Digital Investigations, [S.l.], v. 3, n. 1, apr. 2018.
+#
+# Or, in BibTeX:
+#
+# @article{CybIN,
+# author = {Daniel Plohmann and Martin Clauss and Steffen Enders and Elmar Padilla},
+# title = {{Malpedia: A Collaborative Effort to Inventorize the Malware Landscape}},
+# journal = {{The Journal on Cybercrime \& Digital Investigations}},
+# volume = {3},
+# number = {1},
+# year = {2018},
+# keywords = {malware,analysis,corpus,analysis, windows api},
+# abstract = {{In this paper, we introduce Malpedia, a collaboration platform for curating a malware corpus. It includes a baseline for a cleanly labeled malware corpus consisting of 607 families divided into 1792 samples. This corpus offers a plethora of possibilities for researchers, including using it as a testbed for evaluations on detection and analysis methods, quality assurance for classification, and contextualization of new malware. Based on our corpus, we show that looking beyond packers dramatically reduces the size needed for a corpus to be representative, as the number of distinct malware families and versions after unpacking is orders of magnitude smaller than the number of unique packed samples. Additionally, we perform a comprehensive study of the Windows malware in the corpus, scrutinizing its structural features.}},
+# url = {https://journal.cecyf.fr/ojs/index.php/cybin/article/view/17}
+# }
+#
+# And here's the CITATION.cff format:
+#
+cff-version: 1.2.0
+type: software
+message: "If you are referencing Malpedia in a publication, please cite the paper below."
+title: "Malpedia: A Collaborative Effort to Inventorize the Malware Landscape"
+preferred-citation:
+  title: "Malpedia: A Collaborative Effort to Inventorize the Malware Landscape"
+  type: conference-paper
+  url: "https://journal.cecyf.fr/ojs/index.php/cybin/article/view/17"
+  authors:
+    - family-names: "Plohmann"
+      given-names: "Daniel"
+    - family-names: "Clauss"
+      given-names: "Martin"
+    - family-names: "Enders"
+      given-names: "Steffen"
+    - family-names: "Padilla"
+      given-names: "Elmar"
+  conference:
+    name: "The Journal on Cybercrime & Digital Investigations"
+    city: "Montpellier"
+    country: "FR"
+    date-start: 2017-12-31
+    date-end: 2017-12-31
+  month: 4
+  year: 2018
+  identifiers:
+    - description: "The concept DOI of the work."
+      type: doi
+      value: 10.18464/cybin.v3i1.17 
+authors:
+  - family-names: "Plohmann"
+    given-names: "Daniel"
+  - family-names: "Clauss"
+    given-names: "Martin"
+  - family-names: "Enders"
+    given-names: "Steffen"
+  - family-names: "Padilla"
+    given-names: "Elmar"
