@@ -1,0 +1,32 @@
+services:
+  nginx-proxy:
+    build: nginx
+    restart: always
+    volumes:
+      - ./nginx/default.conf:/tmp/default.conf
+    environment: 
+      - FALCON_SERVER_ADDR=flossed-falcon:8000
+    ports:
+      - "80:80"
+    depends_on:
+      - flossed-falcon
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:80/health-check || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    command: /app/start.sh
+  flossed-falcon:
+    build: flossed-falcon
+    restart: always
+    volumes:
+      - ./data/malpedia_flossed.json:/data/malpedia_flossed.json
+      - ./data/logs:/data/logs
+    ports: 
+      - '8000:8000'
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:8000/falcon-health-check || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    command: python main.py

@@ -1,0 +1,3 @@
+falcon>=2.0.0
+waitress
+gunicorn; platform_system != "Windows"

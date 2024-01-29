@@ -1,16 +1,16 @@
-# Malpedia flossed
+# Malpedia FLOSSed
 
-This repository contains the result of the [FLARE floss tool](https://github.com/mandiant/flare-floss) applied to all unpacked and dumped samples in [Malpedia](https://malpedia.caad.fkie.fraunhofer.de/), pre-processed for further use.
+This repository contains the result of the [FLARE FLOSS tool](https://github.com/mandiant/flare-floss) applied to all unpacked and dumped samples in [Malpedia](https://malpedia.caad.fkie.fraunhofer.de/), pre-processed for further use.
 
 We intend to update this collection periodically.
 
 In the last run in November 2023, 8.010 files associated with 1.751 malware families were processed.  
-Flossing resulted in 35.645.324 raw strings, which were cleaned and deduplicated down to 2.137.276 unique strings.  
+FLOSSing resulted in 35.645.324 raw strings, which were cleaned and deduplicated down to 2.137.276 unique strings.  
 Once decompressed, the collection currently sits at about 400 MB.
 
 ## Data Format
 
-The string collection is provided as a JSON dictionary and has three sections:
+The string collection is provided as a JSON dictionary (see folder `data`) and has three sections:
 
 * `about`: like a file header, this contains some metadata about this collection.
 * `family_to_id`: a mapping of family_ids to the family names, as found in [Malpedia](https://malpedia.caad.fkie.fraunhofer.de/).
@@ -24,7 +24,7 @@ In short, the data looks like this:
   "date_flossed": "2023-11-28",
   "date_published": "2024-01-11",
   "floss_version": "floss v2.3.0-0-g037fc4b",
-  "info": "This collection contains the output of applying the FLARE team's floss tool to all unpacked and dumped malware samples in Malpedia, with additional information in which families the respective string was found, along with its extraction method and encoding. Minor processing has been applied to reduce the number of mistakenly extracted strings from garbled data with no real value to further analysis.",
+  "info": "This collection contains the output of applying the FLARE team's FLOSS tool to all unpacked and dumped malware samples in Malpedia, with additional information in which families the respective string was found, along with its extraction method and encoding. Minor processing has been applied to reduce the number of mistakenly extracted strings from garbled data with no real value to further analysis.",
   "license": "Creative Commons BY-SA 4.0",
   "num_malware_families": 1751,
   "num_processed_strings": 2137276,
@@ -65,8 +65,17 @@ In short, the data looks like this:
   ...
 ```
 
-Possible encodings are `ASCII` and `UTF-16LE`, while methods refers to the floss extraction methods `decoded`, `stack`, `static`, and `tight`.
+Possible encodings are `ASCII` and `UTF-16LE`, while methods refers to the FLOSS extraction methods `decoded`, `stack`, `static`, and `tight`.
 
+## Docker
+
+Instead of parsing 400MB of JSON every time, we provide a dockerized web service.  
+It uses `falcon` as API backend WSGI'd through `waitress`, proxied for deployments through `nginx`.  
+The layout is based on [awesome-compose](https://github.com/docker/awesome-compose/tree/master) but adapted for usage with falcon and waitress.
+
+## Plugins
+
+A good use case for these strings is probably in binary analysis tools, so there is an IDA Pro plugin that demonstrates this.
 
 ## License
 
