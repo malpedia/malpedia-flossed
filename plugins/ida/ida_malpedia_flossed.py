@@ -11,6 +11,7 @@ import os
 import re
 import csv
 import json
+import math
 import requests
 from copy import deepcopy
 
@@ -41,14 +42,14 @@ def csv_encode(list_of_strings):
     return output.getvalue().strip()
 
 def filter_string(string):
-    if re.match("^[ -~\t]+$", string):
+    if re.match("^[ -~\t\r\n]+$", string):
         return string
     return ""
 
 def filter_strings(list_of_strings):
     cleaned_strings = []
     for string in list_of_strings:
-        if re.match("^[ -~\t]+$", string) and not "\n" in string and not "\r" in string:
+        if re.match("^[ -~\t\r\n]+$", string):
             cleaned_strings.append(string)
     return cleaned_strings
 
@@ -113,22 +114,26 @@ class MalpediaStringsForm(PluginForm):
         # actual widgets
         self.cb_show_invalid = QtWidgets.QCheckBox("Show invalid strings")
         self.cb_show_invalid.setEnabled(True)
-        self.cb_show_invalid.setChecked(True)
-        self.cb_show_invalid.clicked.connect(self._onCbShowInvalidClicked)
+        self.cb_show_invalid.setChecked(False)
+        self.cb_show_invalid.clicked.connect(self._onCheckBoxClicked)
         # deduplicate button
         self.cb_deduplicate = QtWidgets.QCheckBox("Deduplicate strings")
         self.cb_deduplicate.setEnabled(True)
         self.cb_deduplicate.setChecked(True)
-        self.cb_deduplicate.clicked.connect(self._onCbDeduplicateClicked)
+        self.cb_deduplicate.clicked.connect(self._onCheckBoxClicked)
         # overview button
         self.b_overview = QtWidgets.QPushButton("Show Overview")
         self.b_overview.clicked.connect(self._onBOverviewClicked)
         self.b_overview.setEnabled(True)
+        # filter trash
+        self.cb_filter_trash = QtWidgets.QCheckBox("Show potential trash strings")
+        self.cb_filter_trash.setEnabled(True)
+        self.cb_filter_trash.setChecked(False)
+        self.cb_filter_trash.clicked.connect(self._onCheckBoxClicked)
         # filter wheel
         self.sb_score_threshold = QtWidgets.QSpinBox()
         self.sb_score_threshold.setRange(0, 100)
         self.sb_score_threshold.setValue(50)
-        # TODO implement this
         self.sb_score_threshold.valueChanged.connect(self.handleSpinScoreChange)
         self.label_sb_score = QtWidgets.QLabel("Min. Score: ")
         # checkboxes
@@ -141,6 +146,7 @@ class MalpediaStringsForm(PluginForm):
         # threshold spinbox and label
         self.threshold_widget = QtWidgets.QWidget()
         threshold_layout = QtWidgets.QVBoxLayout()
+        threshold_layout.addWidget(self.cb_filter_trash)
         threshold_layout.addWidget(self.label_sb_score)
         threshold_layout.addWidget(self.sb_score_threshold)
         self.threshold_widget.setLayout(threshold_layout)
@@ -166,12 +172,7 @@ class MalpediaStringsForm(PluginForm):
         option_compatible_strings = self.filter_by_options(self.flossed_strings)
         self.update_table(option_compatible_strings)
 
-    def _onCbShowInvalidClicked(self, mi):
-        """ If the filter is altered, we refresh the table. """
-        option_compatible_strings = self.filter_by_options(self.flossed_strings)
-        self.update_table(option_compatible_strings)
-
-    def _onCbDeduplicateClicked(self, mi):
+    def _onCheckBoxClicked(self, mi):
         """ If the filter is altered, we refresh the table. """
         option_compatible_strings = self.filter_by_options(self.flossed_strings)
         self.update_table(option_compatible_strings)
@@ -210,6 +211,8 @@ class MalpediaStringsForm(PluginForm):
                     continue
             if string[5] < self.sb_score_threshold.value():
                 continue
+            if not self.cb_filter_trash.isChecked() and string[6] >= 40:
+                continue
             if self.cb_deduplicate.isChecked() and string[2] in deduplicated_strings:
                 continue
             filtered_strings.append(string)
@@ -226,7 +229,6 @@ class MalpediaStringsForm(PluginForm):
         self._flossed_dict = flossed_dict
 
     def get_string_score(self, string):
-        # possibly subject to change once we introduce tags
         score = 0
         if string not in self.info_by_string:
             score = 0
@@ -238,6 +240,14 @@ class MalpediaStringsForm(PluginForm):
                 # string is not known, so probably pretty rate/unique
                 score = 100
         return score
+    
+    def get_trash_score(self, string):
+        # possibly subject to change
+        score = 0
+        for char in string:
+            if not re.match("^[ A-Za-z0-9()\._\-]$", char):
+                score += 1
+        return math.ceil(100 * score / len(string))
 
     def identify_string_type(self, string_item):
         # TODO there are some more types, add PASCAL-type strings
@@ -279,18 +289,23 @@ class MalpediaStringsForm(PluginForm):
         for string_item in idautils.Strings():
             plain_string = str(string_item)
             string_score = self.get_string_score(plain_string)
+            trash_score = self.get_trash_score(plain_string)
             flossed_strings.append((
                 string_item.ea, 
                 self.identify_string_type(string_item), 
                 plain_string, 
                 self.info_by_string[plain_string] if plain_string in self.info_by_string else {}, 
-                plain_string in self.info_by_string, string_score
+                plain_string in self.info_by_string, 
+                string_score,
+                trash_score
             ))
         return flossed_strings
 
     def update_table(self, flossed_strings):
         self.table_flossed_strings.setSortingEnabled(False)
         self.local_function_header_labels = ["Offset", "Type", "String", "Families", "Score", "Tags"]
+        if self.cb_filter_trash.isChecked():
+            self.local_function_header_labels = ["Offset", "Type", "String", "Families", "Score", "Tags", "Trash Score"]
         self.table_flossed_strings.clear()
         self.table_flossed_strings.setColumnCount(len(self.local_function_header_labels))
         self.table_flossed_strings.setHorizontalHeaderLabels(self.local_function_header_labels)
@@ -298,7 +313,7 @@ class MalpediaStringsForm(PluginForm):
         self.table_flossed_strings.setRowCount(len(flossed_strings))
         self.table_flossed_strings.resizeRowToContents(0)
         row = 0
-        for flossed_string in sorted(flossed_strings, key=lambda x: x[5], reverse=True):
+        for flossed_string in sorted(flossed_strings, key=lambda x: (x[5], len(x[2])), reverse=True):
             for column, column_name in enumerate(self.local_function_header_labels):
                 tmp_item = None
                 if column == 0:
@@ -306,13 +321,15 @@ class MalpediaStringsForm(PluginForm):
                 elif column == 1:
                     tmp_item = QTableWidgetItem(flossed_string[1])
                 elif column == 2:
-                    tmp_item = QTableWidgetItem(flossed_string[2].strip())
+                    tmp_item = QTableWidgetItem(flossed_string[2])
                 elif column == 3:
                     tmp_item = NumberQTableWidgetItem("%d" % (flossed_string[3]["family_count"] if flossed_string[3] else 0))
                 elif column == 4:
                     tmp_item = NumberQTableWidgetItem("%5.2f" % flossed_string[5])
                 elif column == 5:
                     tmp_item = QTableWidgetItem(",".join(sorted(flossed_string[3]["tags"])) if flossed_string[3] else 0)
+                elif column == 6:
+                    tmp_item = NumberQTableWidgetItem("%5.2f" % flossed_string[6])
                 tmp_item.setFlags(tmp_item.flags() & ~QtCore.Qt.ItemIsEditable)
                 tmp_item.setTextAlignment(QtCore.Qt.AlignHCenter)
                 tmp_item.setForeground(QtGui.QBrush(QtGui.QColor(0x10, 0x10, 0x10)))
@@ -323,14 +340,18 @@ class MalpediaStringsForm(PluginForm):
             row += 1
         
         self.table_flossed_strings.resizeColumnsToContents()
+        self.table_flossed_strings.resizeRowsToContents()
         self.table_flossed_strings.setSortingEnabled(True)
+        # self.table_flossed_strings.setColumnWidth(2, 600)
         header = self.table_flossed_strings.horizontalHeader()
         for header_id in range(0, len(self.local_function_header_labels), 1):
             try:
-                header.setSectionResizeMode(header_id, QtWidgets.QHeaderView.Stretch)
+                header.setSectionResizeMode(header_id, QtWidgets.QHeaderView.Interactive)
+                if header_id == 2:
+                    header.setSectionResizeMode(header_id, QtWidgets.QHeaderView.Stretch)
+                    header.setMaximumSectionSize(600)
             except:
                 header.setResizeMode(header_id, QtWidgets.QHeaderView.Stretch)
-        header.setStretchLastSection(True)
 
     def _onTableDoubleClicked(self, mi):
         """
@@ -342,7 +363,7 @@ class MalpediaStringsForm(PluginForm):
             idc.jumpto(int(clicked_address, 16))
         if mi.column() > 0:
             clicked_string = self.table_flossed_strings.item(mi.row(), 2).text()
-            if clicked_string in self.info_by_string:
+            if clicked_string in self.info_by_string and self.info_by_string[clicked_string]:
                 string_info = self.info_by_string[clicked_string]
                 print(f"Info: '{string_info['string']}' - tags: [{', '.join(sorted(string_info['tags']))}] - families ({string_info['family_count']}):  [{', '.join(sorted(string_info['families']))}]")
             else:

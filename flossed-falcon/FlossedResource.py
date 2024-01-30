@@ -44,7 +44,7 @@ class FlossedResource:
 
     def on_get_query(self, req, resp, needle=None):
         result = {}
-        if not re.match("^[ -~\t]+$", needle):
+        if not re.match("^[ -~\t\r\n]+$", needle):
             resp.status = falcon.HTTP_400
             resp.data = jsonify({"status": "failed", "data": []})
             LOGGER.info(f"StatusResource.on_post_multiquery - failed - invalid characters posted.")
@@ -70,9 +70,9 @@ class FlossedResource:
         content = req.stream.read()
         content = content.decode().strip()
         for index, char in enumerate(content):
-            if not re.match("^[ -~\t]$", char):
+            if not re.match("^[ -~\t\r\n]$", char):
                 print(f"EVIL CHAR '{char}' (0x{ord(char):x}) @ {index}.")
-        if not re.match("^[ -~\t]+$", content):
+        if not re.match("^[ -~\t\r\n]+$", content):
             resp.status = falcon.HTTP_400
             resp.data = jsonify({"status": "failed", "data": []})
             LOGGER.info(f"StatusResource.on_post_multiquery - failed - invalid characters posted.")

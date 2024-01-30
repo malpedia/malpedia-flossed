@@ -1,3 +1,4 @@
+import os
 import json
 import datetime
 
@@ -14,11 +15,28 @@ class RequestLoggerMiddleware:
         now = datetime.datetime.utcnow()
         # dump the rate limit and stats to log file, reset tracker daily
         if (now - self._last_logwrite).seconds > parameters.LOG_RATE:
-            with open(f"/data/logs/{now.strftime('%Y%m%d_%H%M%S')}.log", "w") as fout:
+            with open(f"{parameters.LOG_PATH}" + os.sep + f"{now.strftime('%Y%m%d_%H%M%S')}.log", "w") as fout:
+                log_output = self._by_ip
+                # aggregate data to omit PII beyond our rate limiting
+                aggregated_data = {
+                    "total_requests": 0,
+                    "total_lookups": 0,
+                    "total_lookup_strings": 0,
+                    "total_resolved_strings": 0,
+                    "num_ip_addresses": len(self._by_ip)
+                }
                 for ip_addr, data in self._by_ip.items():
+                    # stringify timestamps
                     self._by_ip[ip_addr]["last_request"] = self._by_ip[ip_addr]["last_request"].strftime("%Y-%m-%d %H:%M:%S")
                     self._by_ip[ip_addr]["last_api_request"] = self._by_ip[ip_addr]["last_api_request"].strftime("%Y-%m-%d %H:%M:%S")
-                json.dump(self._by_ip, fout, indent=1)
+                    # aggregates
+                    aggregated_data["total_requests"] += data["total_requests"]
+                    aggregated_data["total_lookups"] += data["total_lookups"]
+                    aggregated_data["total_lookup_strings"] += data["total_lookup_strings"]
+                    aggregated_data["total_resolved_strings"] += data["total_resolved_strings"]
+                if parameters.AGGREGATE_LOG:
+                    log_output = aggregated_data
+                json.dump(log_output, fout, indent=1)
                 self._by_ip = {}
             self._last_logwrite = now
         # log the request and monitor rate limit
@@ -34,6 +52,7 @@ class RequestLoggerMiddleware:
                 "last_api_request": datetime.datetime(1970, 1, 1)
             }
         else:
+            self._by_ip[req.remote_addr]["total_requests"] += 1
             self._by_ip[req.remote_addr]["last_request"] = now
             if is_api_request:
                 self._by_ip[req.remote_addr]["total_lookups"] += 1
