@@ -18,6 +18,7 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QTableWidgetItem
 
+import idc
 import ida_kernwin
 import ida_idaapi
 import ida_name
@@ -28,7 +29,7 @@ from idaapi import PluginForm
 
 # global variables used to track initialization/creation of the forms.  
 FLOSSED_FILEPATH = "/data/Repositories/malpedia-flossed/malpedia_flossed.json"
-FLOSSED_SERVICE = "http://127.0.0.1:8000/"
+FLOSSED_SERVICE = "http://127.0.0.1:8000/api/query"
 started = False
 frm = None 
 
@@ -40,14 +41,14 @@ def csv_encode(list_of_strings):
     return output.getvalue().strip()
 
 def filter_string(string):
-    if re.match("^[ -~\t\n\r]+$", string):
+    if re.match("^[ -~\t]+$", string):
         return string
     return ""
 
 def filter_strings(list_of_strings):
     cleaned_strings = []
     for string in list_of_strings:
-        if re.match("^[ -~\t\n\r]+$", string):
+        if re.match("^[ -~\t]+$", string) and not "\n" in string and not "\r" in string:
             cleaned_strings.append(string)
     return cleaned_strings
 
@@ -114,10 +115,15 @@ class MalpediaStringsForm(PluginForm):
         self.cb_show_invalid.setEnabled(True)
         self.cb_show_invalid.setChecked(True)
         self.cb_show_invalid.clicked.connect(self._onCbShowInvalidClicked)
-        # query button
+        # deduplicate button
+        self.cb_deduplicate = QtWidgets.QCheckBox("Deduplicate strings")
+        self.cb_deduplicate.setEnabled(True)
+        self.cb_deduplicate.setChecked(True)
+        self.cb_deduplicate.clicked.connect(self._onCbDeduplicateClicked)
+        # overview button
         self.b_overview = QtWidgets.QPushButton("Show Overview")
         self.b_overview.clicked.connect(self._onBOverviewClicked)
-        self.b_overview.setEnabled(False)
+        self.b_overview.setEnabled(True)
         # filter wheel
         self.sb_score_threshold = QtWidgets.QSpinBox()
         self.sb_score_threshold.setRange(0, 100)
@@ -129,6 +135,7 @@ class MalpediaStringsForm(PluginForm):
         self.checkbox_widget = QtWidgets.QWidget()
         checkbox_layout = QtWidgets.QVBoxLayout()
         checkbox_layout.addWidget(self.cb_show_invalid)
+        checkbox_layout.addWidget(self.cb_deduplicate)
         checkbox_layout.addWidget(self.b_overview)
         self.checkbox_widget.setLayout(checkbox_layout)
         # threshold spinbox and label
@@ -143,6 +150,7 @@ class MalpediaStringsForm(PluginForm):
         self.controls_widget.setLayout(controls_layout)
         ##### bottom part
         self.table_flossed_strings = QtWidgets.QTableWidget()
+        self.table_flossed_strings.doubleClicked.connect(self._onTableDoubleClicked)
         self.main_layout.addWidget(self.controls_widget)
         self.main_layout.addWidget(self.table_flossed_strings)
         self.parent.setLayout(self.main_layout)
@@ -159,19 +167,35 @@ class MalpediaStringsForm(PluginForm):
         self.update_table(option_compatible_strings)
 
     def _onCbShowInvalidClicked(self, mi):
-        # TODO implement this
+        """ If the filter is altered, we refresh the table. """
+        option_compatible_strings = self.filter_by_options(self.flossed_strings)
+        self.update_table(option_compatible_strings)
+
+    def _onCbDeduplicateClicked(self, mi):
         """ If the filter is altered, we refresh the table. """
         option_compatible_strings = self.filter_by_options(self.flossed_strings)
         self.update_table(option_compatible_strings)
 
     def _onBOverviewClicked(self, mi):
-        # TODO implement this
-        """ If the filter is altered, we refresh the table. """
-        option_compatible_strings = self.filter_by_options(self.flossed_strings)
-        self.update_table(option_compatible_strings)
+        # calculate some statistics
+        family_to_score = {}
+        for entry in self.flossed_strings:
+            if entry[3]:
+                for family in entry[3]["families"]:
+                    if family not in family_to_score:
+                        family_to_score[family] = 0
+                    family_to_score[family] += entry[5]
+        num_families_shown = 0
+        print("-" * 50)
+        print("    |                         Family |  agg. score")
+        print("-" * 50)
+        for family, score in sorted(family_to_score.items(), key=lambda x: x[1], reverse=True):
+            num_families_shown +=1
+            print(f"{num_families_shown:>2}. | {family:>30} | {score:>11.2f}")
+            if num_families_shown >= 20:
+                break
 
     def handleSpinScoreChange(self, mi):
-        # TODO implement this
         """ If the filter is altered, we refresh the table. """
         option_compatible_strings = self.filter_by_options(self.flossed_strings)
         self.update_table(option_compatible_strings)
@@ -179,13 +203,17 @@ class MalpediaStringsForm(PluginForm):
     def filter_by_options(self, input_strings):
         start_strings = deepcopy(input_strings)
         filtered_strings = []
-        for string in start_strings:
+        deduplicated_strings = set([])
+        for string in sorted(start_strings):
             if not string[4]:
                 if not self.cb_show_invalid.isChecked():
                     continue
             if string[5] < self.sb_score_threshold.value():
                 continue
+            if self.cb_deduplicate.isChecked() and string[2] in deduplicated_strings:
+                continue
             filtered_strings.append(string)
+            deduplicated_strings.add(string[2])
         return filtered_strings
 
     def get_local_string_info(self, needle):
@@ -233,7 +261,9 @@ class MalpediaStringsForm(PluginForm):
             if len(filtered_strings) < len(all_strings):
                 print(f"Filtered strings from {len(all_strings)} to {len(filtered_strings)}.")
             print(f"Performing lookup for {len(filtered_strings)}...")
-            response = requests.post("http://127.0.0.1:8000/api/query", data=csv_encode(filtered_strings))
+            if any([s for s in filtered_strings if ("\n" in s or "\r" in s)]):
+                print("contains evil chars")
+            response = requests.post(FLOSSED_SERVICE, data=csv_encode(filtered_strings))
             if response.status_code == 200:
                 for entry in response.json()["data"]:
                     self.info_by_string[entry["string"]] = entry if entry["matched"] else {}
@@ -249,12 +279,18 @@ class MalpediaStringsForm(PluginForm):
         for string_item in idautils.Strings():
             plain_string = str(string_item)
             string_score = self.get_string_score(plain_string)
-            flossed_strings.append((string_item.ea, self.identify_string_type(string_item), plain_string, self.info_by_string[plain_string] if plain_string in self.info_by_string else {}, plain_string in self.info_by_string, string_score))
+            flossed_strings.append((
+                string_item.ea, 
+                self.identify_string_type(string_item), 
+                plain_string, 
+                self.info_by_string[plain_string] if plain_string in self.info_by_string else {}, 
+                plain_string in self.info_by_string, string_score
+            ))
         return flossed_strings
 
     def update_table(self, flossed_strings):
         self.table_flossed_strings.setSortingEnabled(False)
-        self.local_function_header_labels = ["Offset", "Type", "String", "Families", "Score"]
+        self.local_function_header_labels = ["Offset", "Type", "String", "Families", "Score", "Tags"]
         self.table_flossed_strings.clear()
         self.table_flossed_strings.setColumnCount(len(self.local_function_header_labels))
         self.table_flossed_strings.setHorizontalHeaderLabels(self.local_function_header_labels)
@@ -275,6 +311,8 @@ class MalpediaStringsForm(PluginForm):
                     tmp_item = NumberQTableWidgetItem("%d" % (flossed_string[3]["family_count"] if flossed_string[3] else 0))
                 elif column == 4:
                     tmp_item = NumberQTableWidgetItem("%5.2f" % flossed_string[5])
+                elif column == 5:
+                    tmp_item = QTableWidgetItem(",".join(sorted(flossed_string[3]["tags"])) if flossed_string[3] else 0)
                 tmp_item.setFlags(tmp_item.flags() & ~QtCore.Qt.ItemIsEditable)
                 tmp_item.setTextAlignment(QtCore.Qt.AlignHCenter)
                 tmp_item.setForeground(QtGui.QBrush(QtGui.QColor(0x10, 0x10, 0x10)))
@@ -294,6 +332,21 @@ class MalpediaStringsForm(PluginForm):
                 header.setResizeMode(header_id, QtWidgets.QHeaderView.Stretch)
         header.setStretchLastSection(True)
 
+    def _onTableDoubleClicked(self, mi):
+        """
+        Use the row with that was double clicked to import the function_name to the current function
+        """
+        if mi.column() == 0:
+            clicked_address = self.table_flossed_strings.item(mi.row(), 0).text()
+            # print("double clicked_block_address", clicked_block_address)
+            idc.jumpto(int(clicked_address, 16))
+        if mi.column() > 0:
+            clicked_string = self.table_flossed_strings.item(mi.row(), 2).text()
+            if clicked_string in self.info_by_string:
+                string_info = self.info_by_string[clicked_string]
+                print(f"Info: '{string_info['string']}' - tags: [{', '.join(sorted(string_info['tags']))}] - families ({string_info['family_count']}):  [{', '.join(sorted(string_info['families']))}]")
+            else:
+                print("Info: not available.")
 
     def OnClose(self, form):
         """

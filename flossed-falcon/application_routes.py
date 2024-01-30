@@ -3,6 +3,7 @@ import logging
 
 import falcon
 
+import parameters
 from FlossedResource import FlossedResource
 from RequestLoggerMiddleware import RequestLoggerMiddleware
 
@@ -18,8 +19,7 @@ def load_flossed_data():
     print("Loading FLOSSed data...")
     flossed_data = {}
     if not flossed_data:
-        # with open("/data/malpedia_flossed.json", "r") as fin:
-        with open("../data/malpedia_flossed.json", "r") as fin:
+        with open(parameters.FLOSS_FILE, "r") as fin:
             raw = fin.read()
             flossed_data = json.loads(raw)
         print(f"Finished loading FLOSSed data with length: {len(raw)}")
@@ -29,10 +29,11 @@ def load_flossed_data():
 
 def get_app():
     flossed_data = load_flossed_data()
-    flossed_resource = FlossedResource(flossed_data)
+    request_logger = RequestLoggerMiddleware()
+    flossed_resource = FlossedResource(flossed_data, request_logger)
     print("Building app...")
 
-    _app = falcon.App(middleware=[RequestLoggerMiddleware()])
+    _app = falcon.App(middleware=[request_logger])
     _app.req_options.strip_url_path_trailing_slash = True
     _app.add_route("/", flossed_resource)
     _app.add_route("/about", flossed_resource, suffix="about")

@@ -67,11 +67,13 @@ In short, the data looks like this:
 
 Possible encodings are `ASCII` and `UTF-16LE`, while methods refers to the FLOSS extraction methods `decoded`, `stack`, `static`, and `tight`.
 
-## Docker
+## Web Service / Docker
 
-Instead of parsing 400MB of JSON every time, we provide a dockerized web service.  
-It uses `falcon` as API backend WSGI'd through `waitress`, proxied for deployments through `nginx`.  
+Instead of parsing the huge JSON file every time, we provide a dockerized web service that enables lookups.  
+It uses `falcon` as API backend, WSGI'd through `waitress`, proxied for deployments through `nginx`.  
 The layout is based on [awesome-compose](https://github.com/docker/awesome-compose/tree/master) but adapted for usage with falcon and waitress.
+
+Check out the [demo Python script](https://github.com/malpedia/malpedia-flossed/blob/main/demo_webservice.py) for how to interact with the service.
 
 ## Plugins
 
