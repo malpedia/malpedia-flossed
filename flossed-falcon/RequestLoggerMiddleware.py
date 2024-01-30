@@ -10,11 +10,18 @@ class RequestLoggerMiddleware:
     def __init__(self) -> None:
         self._last_logwrite = datetime.datetime.utcnow()
         self._by_ip = {}
-    
+
+    def _ensure_path(self, path):
+        try:
+            os.makedirs(path)
+        except:
+            pass
+
     def process_request(self, req, resp):
         now = datetime.datetime.utcnow()
         # dump the rate limit and stats to log file, reset tracker daily
         if (now - self._last_logwrite).seconds > parameters.LOG_RATE:
+            self._ensure_path(parameters.LOG_PATH)
             with open(f"{parameters.LOG_PATH}" + os.sep + f"{now.strftime('%Y%m%d_%H%M%S')}.log", "w") as fout:
                 log_output = self._by_ip
                 # aggregate data to omit PII beyond our rate limiting

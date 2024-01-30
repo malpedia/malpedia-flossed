@@ -10,6 +10,7 @@ import io
 import os
 import re
 import csv
+import time
 import json
 import math
 import requests
@@ -28,9 +29,12 @@ import idautils
 from idaapi import PluginForm
 
 
-# global variables used to track initialization/creation of the forms.  
-FLOSSED_FILEPATH = "/data/Repositories/malpedia-flossed/malpedia_flossed.json"
-FLOSSED_SERVICE = "http://127.0.0.1:8000/api/query"
+# global variables used to track initialization/creation of the forms.
+THIS_FILE_PATH = str(os.path.abspath(__file__))
+PROJECT_ROOT = str(os.path.abspath(os.sep.join([THIS_FILE_PATH, "..", "..", ".."])))
+FLOSSED_FILEPATH = os.sep.join([PROJECT_ROOT, "data", "malpedia_flossed.json"])
+# e.g. "http://127.0.0.1:8000/api/query"
+FLOSSED_SERVICE = ""
 started = False
 frm = None 
 
@@ -163,7 +167,10 @@ class MalpediaStringsForm(PluginForm):
         # do stuff
         self.use_query_service = FLOSSED_SERVICE not in [None, ""]
         if not self.use_query_service:
+            print("No FLOSSed webservice specified.")
             if os.path.exists(FLOSSED_FILEPATH):
+                print("Loading FLOSSed JSON file.")
+                time.sleep(0.5)
                 self.load_json()
             else:
                 raise("Not using service for queries and FLOSSED_FILEPATH is not pointing to a file.")
@@ -226,6 +233,10 @@ class MalpediaStringsForm(PluginForm):
         flossed_dict = {}
         with open(FLOSSED_FILEPATH, "r") as fin:
             flossed_dict = json.load(fin)
+        # translate family_ids to families
+        self._family_id_to_family = {value: key for key, value in flossed_dict["family_to_id"].items()}
+        for _, string_doc in flossed_dict["strings"].items():
+            string_doc["families"] = [self._family_id_to_family[family_id] for family_id in string_doc["families"]]
         self._flossed_dict = flossed_dict
 
     def get_string_score(self, string):
@@ -327,7 +338,7 @@ class MalpediaStringsForm(PluginForm):
                 elif column == 4:
                     tmp_item = NumberQTableWidgetItem("%5.2f" % flossed_string[5])
                 elif column == 5:
-                    tmp_item = QTableWidgetItem(",".join(sorted(flossed_string[3]["tags"])) if flossed_string[3] else 0)
+                    tmp_item = QTableWidgetItem(",".join(sorted(flossed_string[3]["tags"])) if (flossed_string[3] and "tags" in flossed_string[3]) else "")
                 elif column == 6:
                     tmp_item = NumberQTableWidgetItem("%5.2f" % flossed_string[6])
                 tmp_item.setFlags(tmp_item.flags() & ~QtCore.Qt.ItemIsEditable)
@@ -357,15 +368,18 @@ class MalpediaStringsForm(PluginForm):
         """
         Use the row with that was double clicked to import the function_name to the current function
         """
-        if mi.column() == 0:
-            clicked_address = self.table_flossed_strings.item(mi.row(), 0).text()
+        column_id = int(mi.column())
+        row_id = mi.row()
+        if column_id == 0:
+            clicked_address = self.table_flossed_strings.item(row_id, 0).text()
             # print("double clicked_block_address", clicked_block_address)
             idc.jumpto(int(clicked_address, 16))
-        if mi.column() > 0:
-            clicked_string = self.table_flossed_strings.item(mi.row(), 2).text()
+        if column_id > 0:
+            clicked_string = self.table_flossed_strings.item(row_id, 2).text()
             if clicked_string in self.info_by_string and self.info_by_string[clicked_string]:
                 string_info = self.info_by_string[clicked_string]
-                print(f"Info: '{string_info['string']}' - tags: [{', '.join(sorted(string_info['tags']))}] - families ({string_info['family_count']}):  [{', '.join(sorted(string_info['families']))}]")
+                tag_string = ', '.join(sorted(string_info['tags'])) if "tags" in string_info else ""
+                print(f"Info: '{string_info['string']}' - tags: [{tag_string}] - families ({string_info['family_count']}):  [{', '.join(sorted(string_info['families']))}]")
             else:
                 print("Info: not available.")
 
