@@ -4,11 +4,10 @@ services:
     restart: always
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/flossed_falcon.conf:/etc/nginx/sites-enabled/flossed_falcon.conf
+      - ./nginx/flossed_falcon.conf:/tmp/default.conf
       # alternatively, if deployment with TLS is desired, make sure to fill the files in ./nginx/ssl
-      # - ./nginx/flossed_falcon_ssl.conf:/etc/nginx/sites-enabled/flossed_falcon_ssl.conf
+      # - ./nginx/flossed_falcon_ssl.conf:/tmp/default.conf
       # - ./nginx/ssl:/opt/ssl_certificates
-      - ./logs/:/var/log/nginx
     environment: 
       - FALCON_SERVER_ADDR=flossed-falcon:8000
     ports:

@@ -11,10 +11,15 @@ def csv_encode(list_of_strings):
     writer.writerow(list_of_strings)
     return output.getvalue()
 
+# feel free to try our public server
+FLOSSED_SERVER = "https://strings.malpedia.io"
+# ... or your own one
+FLOSSED_SERVER = "http://127.0.0.1:8000"
+
 # demo for single string lookup
-response = requests.get("http://127.0.0.1:8000/api/query/SAFECOOKIE")
+response = requests.get(f"{FLOSSED_SERVER}/api/query/SAFECOOKIE")
 print(json.dumps(response.json(), indent=1))
 
 # demo for bulk string lookup
-response = requests.post("http://127.0.0.1:8000/api/query", data=csv_encode(["SANDBOX", "STRING_NOT_IN_FLOSSED_DATA"]))
+response = requests.post(f"{FLOSSED_SERVER}/api/query", data=csv_encode(["SANDBOX", "STRING_NOT_IN_FLOSSED_DATA"]))
 print(json.dumps(response.json(), indent=1))

@@ -1,4 +1,4 @@
-FROM nginx:1.19.7-alpine
+FROM nginx:1.25.3-alpine
 
 # Add bash for boot cmd
 RUN apk add bash
@@ -6,6 +6,7 @@ RUN apk add bash
 # Add nginx.conf to container
 COPY --chown=nginx:nginx nginx.conf /etc/nginx/nginx.conf
 COPY --chown=nginx:nginx start.sh /app/start.sh
+COPY --chown=nginx:nginx ssl /opt/ssl_certificates
 
 # set workdir
 WORKDIR /app
