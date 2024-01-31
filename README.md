@@ -4,33 +4,34 @@ This repository contains the result of the [FLARE FLOSS tool](https://github.com
 
 We intend to update this collection periodically.
 
-In the last run in November 2023, 8.010 files associated with 1.751 malware families were processed.  
-FLOSSing resulted in 35.645.324 raw strings, which were cleaned and deduplicated down to 2.137.276 unique strings.  
-Once decompressed, the collection currently sits at about 400 MB.
+In the last run in January 2024, 8.522 files associated with 1.845 malware families were processed.  
+FLOSSing resulted in 44.666.177 raw strings, which were cleaned and deduplicated down to 3.835.990 unique strings.  
+Once decompressed, the collection currently sits at about 900 MB.
 
 ## Data Format
 
 The string collection is provided as a JSON dictionary (see folder `data`) and has three sections:
 
 * `about`: like a file header, this contains some metadata about this collection.
-* `family_to_id`: a mapping of family_ids to the family names, as found in [Malpedia](https://malpedia.caad.fkie.fraunhofer.de/).
+* `family_to_id`: a mapping of family_ids to the family names, as found in [Malpedia](https://malpedia.caad.fkie.fraunhofer.de/) (plus some libraries).
 * `strings`: the actual data, a dictionary with string as key and value being a dictionary with some additional information.
 
 In short, the data looks like this:
 ```
 {
  "about": {
-  "author": "Daniel Plohmann // daniel.plohmann<at>fkie.fraunhofer.de>",
-  "date_flossed": "2023-11-28",
-  "date_published": "2024-01-11",
-  "floss_version": "floss v2.3.0-0-g037fc4b",
-  "info": "This collection contains the output of applying the FLARE team's FLOSS tool to all unpacked and dumped malware samples in Malpedia, with additional information in which families the respective string was found, along with its extraction method and encoding. Minor processing has been applied to reduce the number of mistakenly extracted strings from garbled data with no real value to further analysis.",
+  "author": "Daniel Plohmann // daniel.plohmann<at>fkie.fraunhofer.de",
+  "date_flossed": "2024-01-19",
+  "date_published": "2024-01-30",
+  "floss_version": "floss v3.0.1-0-g3782dc9",
+  "info": "This collection contains the output of applying the FLARE team's floss tool to all unpacked+dumped samples in Malpedia, with additional information in which families the respective string was found, along with its extraction method and encoding. Processing has been applied to reduce the number of mistakenly extracted data strings with no real value to further analysis, FLOSS QUANTUMSTRAND and own tagging has been applied to enrich the output.",
   "license": "Creative Commons BY-SA 4.0",
-  "num_malware_families": 1751,
-  "num_processed_strings": 2137276,
-  "num_files_flossed": 8010,
-  "num_total_strings": 35645324,
-  "reference": "https://malpedia.caad.fkie.fraunhofer.de/",
+  "num_malware_families": 1845,
+  "num_processed_strings": 3835990,
+  "num_samples_flossed": 8522,
+  "num_tagged_strings": 1599459,
+  "num_total_strings": 44666177,
+  "reference": "malpedia.caad.fkie.fraunhofer.de/",
   "source": "https://github.com/malpedia/malpedia-flossed"
  },
  "family_to_id": {
@@ -49,35 +50,50 @@ In short, the data looks like this:
     "ASCII"
    ],
    "families": [
-    76,
-    255,
-    640,
-    863,
-    867,
-    1488
+    79,
+    272,
+    683,
+    914,
+    918,
+    1000,
+    1572
    ],
-   "family_count": 6,
+   "family_count": 7,
    "methods": [
     "static"
    ],
-   "string": "Mozilla/4.0 (compatible; MSIE 6.0; Win32)"
+   "string": "Mozilla/4.0 (compatible; MSIE 6.0; Win32)",
+   "tags": [
+    "user-agent"
+   ]
   },
   ...
 ```
 
-Possible encodings are `ASCII` and `UTF-16LE`, while methods refers to the FLOSS extraction methods `decoded`, `stack`, `static`, and `tight`.
+Possible encodings are `ASCII` and `UTF-16LE`, while methods refers to the FLOSS extraction methods `decoded`, `stack`, `static`, `tight`, and `language`.  
+The tags are derived from a set of own heuristics as well as based on methods and data found in the [QUANTUMSTRAND](https://github.com/mandiant/flare-floss/tree/quantumstrand/floss/qs) development branch of FLOSS.
 
 ## Web Service / Docker
 
 Instead of parsing the huge JSON file every time, we provide a dockerized web service that enables lookups.  
 It uses `falcon` as API backend, WSGI'd through `waitress`, proxied for deployments through `nginx`.  
-The layout is based on [awesome-compose](https://github.com/docker/awesome-compose/tree/master) but adapted for usage with falcon and waitress.
+The layout is based on [awesome-compose](https://github.com/docker/awesome-compose/tree/master) but updated and adapted for usage with falcon and waitress.
 
+The service supports single lookups as GET requests and multi-lookups as POST requests:
+```
+$ curl https://strings.malpedia.io/api/query/FIXME  
+{"status": "successful", "data": [{"encodings": ["ASCII"], "families": ["win.kins", "win.vmzeus", "win.zeus_sphinx", "win.citadel", "win.ice_ix", "win.murofet", "win.zeus"], "family_count": 7, "methods": ["static"], "string": "FIXME", "tags": [], "matched": true}, {"matched": false, "string": "NOT_FLOSSED"}]}
+
+$ curl -X POST https://strings.malpedia.io/api/query/ --data '"FIXME","NOT_IN_THE_DATABASE"'
+{"status": "successful", "data": [{"encodings": ["ASCII"], "families": ["win.kins", "win.vmzeus", "win.zeus_sphinx", "win.citadel", "win.ice_ix", "win.murofet", "win.zeus"], "family_count": 7, "methods": ["static"], "string": "FIXME", "tags": [], "matched": true}, {"matched": false, "string": "NOT_IN_THE_DATABASE"}]}
+```
 Check out the [demo Python script](https://github.com/malpedia/malpedia-flossed/blob/main/demo_webservice.py) for how to interact with the service.
+
+We also host a public instance of this service at [strings.malpedia.io](https://strings.malpedia.io).
 
 ## Plugins
 
-A good use case for these strings is probably in binary analysis tools, so there is an IDA Pro plugin that demonstrates this.
+A good use case for this collection of strings is probably in binary analysis tools, so we build an IDA Pro plugin that demonstrates this.
 
 ## License
 
