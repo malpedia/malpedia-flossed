@@ -63,7 +63,7 @@ ENV/
 
 # project files
 config.ini
-config.py
+# config.py
 coverage-html/
 coverage_html_report
 

@@ -3,7 +3,7 @@ import logging
 
 import falcon
 
-import parameters
+import config
 from FlossedResource import FlossedResource
 from RequestLoggerMiddleware import RequestLoggerMiddleware
 
@@ -19,7 +19,7 @@ def load_flossed_data():
     print("Loading FLOSSed data...")
     flossed_data = {}
     if not flossed_data:
-        with open(parameters.FLOSS_FILE, "r") as fin:
+        with open(config.FLOSS_FILE, "r") as fin:
             raw = fin.read()
             flossed_data = json.loads(raw)
         print(f"Finished loading FLOSSed data with length: {len(raw)}")

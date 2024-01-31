@@ -3,7 +3,12 @@ services:
     build: nginx
     restart: always
     volumes:
-      - ./nginx/default.conf:/tmp/default.conf
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/flossed_falcon.conf:/etc/nginx/sites-enabled/flossed_falcon.conf
+      # alternatively, if deployment with TLS is desired, make sure to fill the files in ./nginx/ssl
+      # - ./nginx/flossed_falcon_ssl.conf:/etc/nginx/sites-enabled/flossed_falcon_ssl.conf
+      # - ./nginx/ssl:/opt/ssl_certificates
+      - ./logs/:/var/log/nginx
     environment: 
       - FALCON_SERVER_ADDR=flossed-falcon:8000
     ports:
@@ -12,8 +17,8 @@ services:
       - flossed-falcon
     healthcheck:
       test: ["CMD-SHELL", "curl --silent --fail localhost:80/health-check || exit 1"]
-      interval: 10s
-      timeout: 10s
+      interval: 60s
+      timeout: 60s
       retries: 3
     command: /app/start.sh
   flossed-falcon:
@@ -21,12 +26,12 @@ services:
     restart: always
     volumes:
       - ./data/malpedia_flossed.json:/data/malpedia_flossed.json
-      - ./data/logs:/data/logs
+      - ./logs:/data/logs
     ports: 
       - '8000:8000'
     healthcheck:
       test: ["CMD-SHELL", "curl --silent --fail localhost:8000/falcon-health-check || exit 1"]
-      interval: 30s
-      timeout: 30s
+      interval: 60s
+      timeout: 60s
       retries: 3
     command: python main.py

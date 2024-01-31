@@ -7,7 +7,7 @@ from io import StringIO
 
 import falcon
 
-import parameters
+import config
 from RequestLoggerMiddleware import RequestLoggerMiddleware
 
 
@@ -29,7 +29,7 @@ class FlossedResource:
 
     def on_get(self, req, resp):
         resp.status = falcon.HTTP_200
-        resp.data = jsonify({"status": "successful", "data": {"message": f"Welcome to {parameters.SERVICE_ADDR}"}})
+        resp.data = jsonify({"status": "successful", "data": {"message": f"Welcome to {config.SERVICE_ADDR}"}})
         LOGGER.info(f"FlossedResource.on_get - success.")
 
     def on_get_about(self, req, resp):
@@ -39,7 +39,7 @@ class FlossedResource:
 
     def on_get_api_welcome(self, req, resp):
         resp.status = falcon.HTTP_200
-        resp.data = jsonify({"status": "successful", "data": {"message": parameters.API_WELCOME_MESSAGE}})
+        resp.data = jsonify({"status": "successful", "data": {"message": config.API_WELCOME_MESSAGE}})
         LOGGER.info(f"FlossedResource.on_get - success.")
 
     def on_get_query(self, req, resp, needle=None):

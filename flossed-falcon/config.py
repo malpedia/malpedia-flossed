@@ -8,19 +8,22 @@ BURST_QUOTA = 100
 # time in seconds an IP address has to wait with its next lookup once BURST_QUOTA is depleted
 RATE_LIMIT = 5
 # omit logging of individual IP addresses and aggregate data instead
-AGGREGATE_LOG = False
+AGGREGATE_LOG = True
 # write logfile to disk every <n> seconds
 LOG_RATE = 3600 * 24
 
+# TODO adjust these parts if needed
 SERVICE_ADDR = "strings.malpedia.io"
 API_WELCOME_MESSAGE = f"""
 Welcome to the API endpoint of {SERVICE_ADDR}!
-You can interact with this service by using GET and POST queries.
+It enables lookups against a database of extracted strings from malware.
+
+You can interact with this service using GET and POST requests.
 
 GET {SERVICE_ADDR}/api/query/<needle>
 * Gives you the lookup result for a single target string.
 POST {SERVICE_ADDR}/api/query/
-* Allows multiple lookups at once and requires you do submit your data as POST body in one CSV encoded line.
+* Allows multiple string lookups at once and requires you do submit your data as POST body in one CSV encoded line.
 
 Want to run your instance or more documentation? 
 * https://github.com/malpedia/malpedia-flossed

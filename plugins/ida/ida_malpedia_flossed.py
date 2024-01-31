@@ -28,13 +28,16 @@ import ida_nalt
 import idautils
 from idaapi import PluginForm
 
-
-# global variables used to track initialization/creation of the forms.
+# Define location for the FLOSSed file
 THIS_FILE_PATH = str(os.path.abspath(__file__))
 PROJECT_ROOT = str(os.path.abspath(os.sep.join([THIS_FILE_PATH, "..", "..", ".."])))
 FLOSSED_FILEPATH = os.sep.join([PROJECT_ROOT, "data", "malpedia_flossed.json"])
-# e.g. "http://127.0.0.1:8000/api/query"
-FLOSSED_SERVICE = ""
+# If you set FLOSSED_SERVICE, this will be used instead of the local file
+# e.g. use "https://strings.malpedia.io/api/query"
+# or "http://127.0.0.1:8000/api/query" if you have your own local setup
+FLOSSED_SERVICE = "http://127.0.0.1:8000/api/query"
+
+# global variables used to track initialization/creation of the forms.
 started = False
 frm = None 
 
