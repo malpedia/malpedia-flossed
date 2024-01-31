@@ -33,9 +33,13 @@ THIS_FILE_PATH = str(os.path.abspath(__file__))
 PROJECT_ROOT = str(os.path.abspath(os.sep.join([THIS_FILE_PATH, "..", "..", ".."])))
 FLOSSED_FILEPATH = os.sep.join([PROJECT_ROOT, "data", "malpedia_flossed.json"])
 # If you set FLOSSED_SERVICE, this will be used instead of the local file
-# e.g. use "https://strings.malpedia.io/api/query"
-# or "http://127.0.0.1:8000/api/query" if you have your own local setup
-FLOSSED_SERVICE = "http://127.0.0.1:8000/api/query"
+# e.g. use our hosted
+# FLOSSED_SERVICE = "https://strings.malpedia.io/api/query"
+# ... or if you have your own local setup
+# FLOSSED_SERVICE = "http://127.0.0.1:8000/api/query"
+# leaving this empty means local mode, i.e. loading the JSON specified above instead
+FLOSSED_SERVICE = ""
+
 
 # global variables used to track initialization/creation of the forms.
 started = False
@@ -176,7 +180,7 @@ class MalpediaStringsForm(PluginForm):
                 time.sleep(0.5)
                 self.load_json()
             else:
-                raise("Not using service for queries and FLOSSED_FILEPATH is not pointing to a file.")
+                raise("Configured to not use a web service for queries but FLOSSED_FILEPATH is not pointing to a valid file - did you unpack the zip file in ./data yet?")
         self.info_by_string = {}
         self.flossed_strings = self.process_strings()
         option_compatible_strings = self.filter_by_options(self.flossed_strings)
