@@ -91,9 +91,17 @@ Check out the [demo Python script](https://github.com/malpedia/malpedia-flossed/
 
 We also host a public instance of this service at [strings.malpedia.io](https://strings.malpedia.io).
 
-## Plugins
+Here is some [documentation](docs/webservice.md) for the webservice.
 
-A good use case for this collection of strings is probably in binary analysis tools, so we build an IDA Pro plugin that demonstrates this.
+## Plugin(s)
+
+A good use case for this collection of strings is probably in binary analysis tools, so we build an IDA Pro plugin that demonstrates this:
+
+<img src="IdaMalpediaFlossed.png" alt="Screenshot of the IDA plugin" width="1500">
+
+Here is some [documentation](docs/plugin.md) for the plugin(s).
+
+We plan to extend tool coverage to at least Binary Ninja and Ghidra in the future.
 
 ## License
 
