@@ -7,10 +7,12 @@ LOG_PATH = "/data/logs/"
 BURST_QUOTA = 100
 # time in seconds an IP address has to wait with its next lookup once BURST_QUOTA is depleted
 RATE_LIMIT = 5
+# limit contains queries to at most this number of results
+MAX_CONTAINS_RESULTS = 100
 # omit logging of individual IP addresses and aggregate data instead
 AGGREGATE_ONLY = True
 # write logfile to disk every <n> seconds
-LOG_RATE = 3600 * 24
+LOG_RATE = 3600 * 12
 
 # TODO adjust these parts if needed
 SERVICE_ADDR = "strings.malpedia.io"

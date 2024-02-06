@@ -6,6 +6,7 @@ import falcon
 import config
 from FlossedResource import FlossedResource
 from RequestLoggerMiddleware import RequestLoggerMiddleware
+from RawPathComponent import RawPathComponent
 
 
 # Only do basicConfig if no handlers have been configured
@@ -30,10 +31,11 @@ def load_flossed_data():
 def get_app():
     flossed_data = load_flossed_data()
     request_logger = RequestLoggerMiddleware()
+    raw_path_component = RawPathComponent()
     flossed_resource = FlossedResource(flossed_data, request_logger)
     LOGGER.info("Building falcon app...")
 
-    _app = falcon.App(middleware=[request_logger])
+    _app = falcon.App(middleware=[raw_path_component, request_logger])
     _app.req_options.strip_url_path_trailing_slash = True
     _app.add_route("/", flossed_resource)
     _app.add_route("/api", flossed_resource, suffix="api_welcome")

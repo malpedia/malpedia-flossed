@@ -2,6 +2,7 @@ import re
 import csv
 import json
 import logging
+import urllib.parse
 from copy import deepcopy
 from io import StringIO
 
@@ -54,22 +55,48 @@ class FlossedResource:
         LOGGER.info(f"FlossedResource.on_get_api_welcome - success.")
 
     def on_get_query(self, req, resp, needle=None):
+        is_contains_query = False 
+        if "contains" in req.params:
+            is_contains_query = req.params["contains"].lower().strip() in ["1", "true"]
         result = {}
-        if not re.match("^[ -~\t\r\n]+$", needle):
+        decoded_needle = urllib.parse.unquote(needle)
+        if not re.match("^[ -~\t\r\n]+$", decoded_needle):
             resp.status = falcon.HTTP_400
             resp.data = jsonify({"status": "failed", "data": []})
-            LOGGER.info(f"StatusResource.on_get_query - failed - invalid characters posted.")
+            LOGGER.info(f"StatusResource.on_get_query - failed - invalid characters included.")
             return
-        result = self._flossed_data["strings"].get(needle, {})
-        self.request_logger.logLookup(req, 1, 1 if result else 0)
-        response = {"matched": False, "string": needle}
-        if result:
-            response = deepcopy(result)
-            response["matched"] = True
-            response["families"] = [self._family_id_to_family[family_id] for family_id in result["families"]]
-        resp.status = falcon.HTTP_200
-        resp.data = jsonify({"status": "successful", "data": [response]})
-        LOGGER.info(f"FlossedResource.on_get_query - success.")
+        if is_contains_query:
+            if not config.MAX_CONTAINS_RESULTS:
+                resp.data = jsonify({"status": "failed","data": {"message": "This instance does not allow contains queries."}})
+                resp.status = falcon.HTTP_400
+                LOGGER.info(f"StatusResource.on_get_query - failed - tried to do contains, but not allowed by config.")
+            all_responses = []
+            num_results = 0
+            for key in self._flossed_data["strings"]:
+                if num_results >= config.MAX_CONTAINS_RESULTS:
+                    break
+                if decoded_needle in key:
+                    result = self._flossed_data["strings"][key]
+                    response = deepcopy(result)
+                    response["matched"] = True
+                    response["families"] = [self._family_id_to_family[family_id] for family_id in result["families"]]
+                    all_responses.append(response)
+                    num_results += 1
+            self.request_logger.logLookup(req, 1, 1 if all_responses else 0)
+            resp.status = falcon.HTTP_200
+            resp.data = jsonify({"status": "successful", "info": f"Results are limited to at most {config.MAX_CONTAINS_RESULTS} hits.", "data": all_responses})
+            LOGGER.info(f"FlossedResource.on_get_query - contains query - success.")
+        else:
+            result = self._flossed_data["strings"].get(decoded_needle, {})
+            self.request_logger.logLookup(req, 1, 1 if result else 0)
+            response = {"matched": False, "string": decoded_needle}
+            if result:
+                response = deepcopy(result)
+                response["matched"] = True
+                response["families"] = [self._family_id_to_family[family_id] for family_id in result["families"]]
+            resp.status = falcon.HTTP_200
+            resp.data = jsonify({"status": "successful", "data": [response]})
+            LOGGER.info(f"FlossedResource.on_get_query - success.")
 
     def on_post_multiquery(self, req, resp):
         if not req.content_length:

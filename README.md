@@ -103,6 +103,12 @@ Here is some [documentation](docs/plugin.md) for the plugin(s).
 
 We plan to extend tool coverage to at least Binary Ninja and Ghidra in the future.
 
+## Version
+
+* 2024-02-06 v1.2 - Proper decoding of `/api/query/<needle>` when facing urlencoded path, added capability for `contains` queries
+* 2024-01-31 v1.1 - Second Release of FLOSSed file, IDA Plugin, web service
+* 2024-01-11 v1.0 - Initial Release of FLOSSed file
+
 ## License
 
 The data is released as under the [CC BY-SA 4.0 license](https://creativecommons.org/licenses/by-sa/4.0/), allowing commercial usage.
