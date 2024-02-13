@@ -4,7 +4,7 @@ import os
 THIS_FILE_PATH = str(os.path.abspath(__file__))
 PROJECT_ROOT = str(os.path.abspath(os.sep.join([THIS_FILE_PATH, ".."])))
 # location for the FLOSS file
-FLOSS_FILE = "../data/malpedia_flossed.json"
+FLOSS_FILE = "/data/malpedia_flossed.json"
 # location where to write logs
 LOG_PATH = "/var/log/flossed-falcon/"
 # number of requests that an IP address may use for lookups before RATE_LIMIT kicks in 
