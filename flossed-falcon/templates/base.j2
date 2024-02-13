@@ -1,0 +1,54 @@
+<!doctype html>
+<head>
+  <title>{% block title %}{% endblock %} - MalpediaFLOSSed</title>
+  <style>
+    .string-match {
+      line-height: 1.7em;
+    }
+    .quota {
+      font-size: 0.7em;
+    }
+    .tag-badge {
+      background-color: #085084;
+      color: white;
+      padding: 3px 5px;
+      text-align: center;
+      border-radius: 8px;
+    }
+    .family-badge {
+      background-color: #403F3D;
+      color: white;
+      padding: 3px 5px;
+      text-align: center;
+      border-radius: 8px;
+    }
+    .family-link-badge {
+      background-color: #A50909;
+      color: white;
+      padding: 3px 5px;
+      text-align: center;
+      border-radius: 8px;
+    }
+    a.intro, a.intro:visited, a.intro:active, a.intro:hover {
+      color: #000000;
+      text-decoration: underline;
+    }
+    .family-link-badge a, a:visited, a:active {
+      color: #dddddd;
+      text-decoration: none;
+    }
+    .family-link-badge a:hover {
+      background-color: #C60909;
+      color: #dddddd;
+      text-decoration: underline;
+
+    }
+  </style>
+  {% block style %}{% endblock %}
+</head>
+<body style="font-family: sans-serif">
+  <section class="content">
+      {% block content %}{% endblock %}
+  </section>
+</body>
+</html>

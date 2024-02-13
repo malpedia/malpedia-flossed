@@ -17,8 +17,8 @@ services:
       - flossed-falcon
     healthcheck:
       test: ["CMD-SHELL", "curl --silent --fail localhost:80/health-check || exit 1"]
-      interval: 60s
-      timeout: 60s
+      interval: 600s
+      timeout: 600s
       retries: 3
     command: /app/start.sh
   flossed-falcon:
@@ -26,12 +26,12 @@ services:
     restart: always
     volumes:
       - ./data/malpedia_flossed.json:/data/malpedia_flossed.json
-      - ./logs:/data/logs
+      - ./logs:/var/log/
     ports: 
       - '8000:8000'
     healthcheck:
       test: ["CMD-SHELL", "curl --silent --fail localhost:8000/falcon-health-check || exit 1"]
-      interval: 60s
-      timeout: 60s
+      interval: 600s
+      timeout: 600s
       retries: 3
     command: python main.py

@@ -1,0 +1,49 @@
+{% extends 'base.j2' %}
+
+{% block title%}
+Results
+{% endblock %}
+
+{% block style %}
+{% endblock %}
+
+
+{% block content %}
+    <h1>Results</h1>
+    <div width=600px>
+    <form action="/query" method='GET'>
+        <input size=50 type="text" class="form-control shadow-none" name="needle" value="" id="needle" placeholder="Search for another string" autofocus required>
+        <input type='text' name="contains" value=1 id="contains"  hidden>
+        <input type='submit' hidden>
+    </form>
+    {% if quota["remaining_burst_quota"] %}
+    <span class="quota">Remaining burst quota: {{ quota["remaining_burst_quota"] }}.</span>
+    {% else %}
+        {% if quota["wait_timeout"] == 0 %}
+            <span class="quota">Ready for another next request.</span>
+        {% else %}
+            <span class="quota">Wait {{ quota["wait_timeout"] }} seconds until your next request.</span>
+        {% endif  %}
+    {% endif  %}
+    </div>
+    <p>Showing results for: {{ needle }}
+    {% for entry in response["data"] %}
+        <div class="string-match">
+            <h3>{{loop.index}}. Match</h3>
+            <p>{{ entry["string"] }}</p>
+            <p>String Distance: {% if entry["distance"] == 20 %}>={% endif %}{{ entry["distance"] }} | Tags: {% for tag in entry["tags"] %}
+                    <span class="tag-badge">{{ tag }}</span>
+                {% endfor %}</p>
+            <p>Families ({{ entry["family_count"] }}): 
+                {% for family in entry["families"] %}
+                    {% if family in ["msvc", "mingw"] or family.startswith("lib") %}
+                        <span class="family-badge">{{ family }}</span>
+                    {% else %}
+                        <span class="family-link-badge"><a href="https://malpedia.caad.fkie.fraunhofer.de/details/{{ family }}">{{ family }}</a></span>
+                    {% endif %}
+                {% endfor %}</p>
+            <p>Encodings / Extraction methods: {{ entry["encodings"] }} / {{ entry["methods"] }}</p>
+        </div>
+        <hr />
+    {% endfor %}
+{% endblock %}

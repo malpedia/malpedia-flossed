@@ -1,0 +1,32 @@
+{% extends 'base.j2' %}
+
+{% block title%}
+Welcome
+{% endblock %}
+
+{% block style %}
+{% endblock %}
+
+
+{% block content %}
+<h1>Welcome to MalpediaFLOSSed</h1>
+<div>
+<p>This service enables lookups against a database of extracted strings from unpacked+dumped malware found in <a class="intro" href="https://malpedia.caad.fkie.fraunhofer.de">Malpedia</a>.</p>
+<p>For for documentation or if you want to set up your own instance, visit the <a class="intro" href="https://github.com/malpedia/malpedia-flossed">Github repository</a>.</p>
+<div width=600px>
+  <form action="/query" method='GET'>
+    <input size=50 type="text" class="form-control shadow-none" name="needle" value="" id="needle" placeholder="Search for a string" autofocus required>
+    <input type='text' name="contains" value=1 id="contains"  hidden>
+    <input type='submit' hidden>
+  </form>
+  {% if quota["remaining_burst_quota"] %}
+  <span class="quota">Remaining burst quota: {{ quota["remaining_burst_quota"] }}.</span>
+  {% else %}
+    {% if quota["wait_timeout"] == 0 %}
+        <span class="quota">Ready for another next request.</span>
+    {% else %}
+        <span class="quota">Wait {{ quota["wait_timeout"] }} seconds until your next request.</span>
+    {% endif  %}
+  {% endif  %}
+</div>
+{% endblock %}

@@ -29,9 +29,9 @@ class RequestLoggerMiddleware:
 
     def _persistLog(self, now):
         self._ensure_path(config.LOG_PATH)
-        with open(f"{config.LOG_PATH}" + os.sep + f"{now.strftime('%Y%m%d_%H%M%S')}.log", "w") as fout:
+        with open(f"{config.LOG_PATH}" + os.sep + f"{now.strftime('%Y%m%d_%H%M%S')}_log.json", "w") as fout:
             log_output = {
-                "aggregated": self._getAggregatedStats(),
+                "aggregated": self.getStats(),
                 "details": self._by_ip
             }
             # aggregate data to omit PII beyond our rate limiting
@@ -50,6 +50,7 @@ class RequestLoggerMiddleware:
             "total_lookups": 0,
             "total_lookup_strings": 0,
             "total_resolved_strings": 0,
+            "total_returned_strings": 0,
             "num_ip_addresses": len(self._by_ip),
             "data_since": self._last_logwrite.strftime("%Y-%m-%d %H:%M:%S")
         }
@@ -59,23 +60,40 @@ class RequestLoggerMiddleware:
             aggregated["total_lookups"] += data["total_lookups"]
             aggregated["total_lookup_strings"] += data["total_lookup_strings"]
             aggregated["total_resolved_strings"] += data["total_resolved_strings"]
+            aggregated["total_returned_strings"] += data["total_returned_strings"]
         return aggregated
+    
+    def getQuotaStatus(self, req):
+        remote_ip_addr = self._get_remote_ip(req)
+        quota_status = {
+            "remaining_burst_quota": config.BURST_QUOTA,
+            "wait_timeout": 0
+        }
+        if remote_ip_addr in self._by_ip:
+            quota_status["remaining_burst_quota"] = self._by_ip[remote_ip_addr]["burst_quota_remaining"]
+            if self._by_ip[remote_ip_addr]["burst_quota_remaining"] == 0:
+                now = datetime.datetime.utcnow()
+                seconds_since_last_api_request = (now - self._by_ip[remote_ip_addr]["last_api_request"]).seconds
+                wait_timeout = config.RATE_LIMIT - seconds_since_last_api_request
+                quota_status["wait_timeout"] = max(0, wait_timeout)
+        return quota_status
 
     def process_request(self, req, resp):
         now = datetime.datetime.utcnow()
         remote_ip_addr = self._get_remote_ip(req)
         # dump the rate limit and stats to log file, reset tracker daily
-        if (now - self._last_logwrite).seconds > config.LOG_RATE:
+        if (now - self._last_logwrite).total_seconds() > config.LOG_RATE:
             self._persistLog(now)
             self._by_ip = {}
         # log the request and monitor rate limit
-        is_api_request = req.path.startswith("/api")
+        is_api_request = req.path.startswith("/api") or req.path.startswith("/query")
         if remote_ip_addr not in self._by_ip:
             self._by_ip[remote_ip_addr] = {
                 "total_requests": 0,
                 "total_lookups": 0,
                 "total_lookup_strings": 0,
                 "total_resolved_strings": 0,
+                "total_returned_strings": 0,
                 "burst_quota_remaining": config.BURST_QUOTA,
                 "last_request": now,
                 "last_api_request": datetime.datetime(1970, 1, 1)
@@ -97,7 +115,8 @@ class RequestLoggerMiddleware:
             self._by_ip[remote_ip_addr]["total_lookups"] += 1
             self._by_ip[remote_ip_addr]["last_api_request"] = now
 
-    def logLookup(self, req, num_lookup_strings, num_resolved_strings):
+    def logLookup(self, req, num_lookup_strings, num_resolved_strings, num_returned_strings):
         remote_ip_addr = self._get_remote_ip(req)
         self._by_ip[remote_ip_addr]["total_lookup_strings"] += num_lookup_strings
         self._by_ip[remote_ip_addr]["total_resolved_strings"] += num_resolved_strings
+        self._by_ip[remote_ip_addr]["total_returned_strings"] += num_returned_strings
