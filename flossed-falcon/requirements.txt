@@ -1,3 +1,4 @@
 jinja2
 falcon>=2.0.0
 waitress
+rapidfuzz
