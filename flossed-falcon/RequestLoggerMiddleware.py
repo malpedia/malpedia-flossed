@@ -27,9 +27,8 @@ class RequestLoggerMiddleware:
         remote_ip_addr = req.access_route[0]
         return remote_ip_addr
 
-    def _persistLog(self, now):
-        self._ensure_path(config.LOG_PATH)
-        with open(f"{config.LOG_PATH}" + os.sep + f"{now.strftime('%Y%m%d_%H%M%S')}_log.json", "w") as fout:
+    def _writeLogFile(self, log_filepath, now):
+        with open(log_filepath, "w") as fout:
             log_output = {
                 "aggregated": self.getStats(),
                 "details": self._by_ip
@@ -43,6 +42,17 @@ class RequestLoggerMiddleware:
                 log_output.pop("details")
             json.dump(log_output, fout, indent=1)
             self._last_logwrite = now
+
+    def _persistLog(self, now):
+        self._ensure_path(config.LOG_PATH)
+        log_filepath = f"{config.LOG_PATH}" + os.sep + f"{now.strftime('%Y%m%d_%H%M%S')}_log.json"
+        try:
+            self._writeLogFile(log_filepath, now)
+        except:
+            LOGGER.error(f"Could not write logfile to {log_filepath}, logging into local directly instead.")
+            local_log_filepath = config.PROJECT_ROOT + os.sep + f"{now.strftime('%Y%m%d_%H%M%S')}_log.json"
+            self._writeLogFile(local_log_filepath, now)
+
 
     def getStats(self):
         aggregated = {

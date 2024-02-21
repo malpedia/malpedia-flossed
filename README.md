@@ -105,6 +105,7 @@ We plan to extend tool coverage to at least Binary Ninja and Ghidra in the futur
 
 ## Version
 
+* 2024-02-21 v1.4 - Addressing issues with log file writing.
 * 2024-02-13 v1.3 - Web service now renders HTML results.
 * 2024-02-06 v1.2 - Proper decoding of `/api/query/<needle>` when facing urlencoded path, added capability for `contains` queries
 * 2024-01-31 v1.1 - Second Release of FLOSSed file, IDA Plugin, web service

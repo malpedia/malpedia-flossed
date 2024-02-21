@@ -38,7 +38,7 @@ FLOSSED_FILEPATH = os.sep.join([PROJECT_ROOT, "data", "malpedia_flossed.json"])
 # ... or if you have your own local setup
 # FLOSSED_SERVICE = "http://127.0.0.1:8000/api/query"
 # leaving this empty means local mode, i.e. loading the JSON specified above instead
-FLOSSED_SERVICE = ""
+FLOSSED_SERVICE = "https://strings.malpedia.io/api/query"
 
 
 # global variables used to track initialization/creation of the forms.
