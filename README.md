@@ -95,16 +95,16 @@ Here is some [documentation](docs/webservice.md) for the webservice.
 
 ## Plugin(s)
 
-A good use case for this collection of strings is probably in binary analysis tools, so we build an IDA Pro plugin that demonstrates this:
+A good use case for this collection of strings is probably in binary analysis tools, so we build an plugin compatible with IDA Pro, Ghidra, and Binary Ninja that demonstrates this:
 
 <img src="IdaMalpediaFlossed.png" alt="Screenshot of the IDA plugin" width="1500">
 
-Here is some [documentation](docs/plugin.md) for the plugin(s).
-
-We plan to extend tool coverage to at least Binary Ninja and Ghidra in the future.
+In order to work with all three platforms at once, we use the [gui-plugin-template](https://github.com/danielplohmann/gui-plugin-template), which is based off [hyara](https://github.com/hyuunnn/Hyara).  
+Here is some [documentation](docs/plugin.md) for the plugin, explaining how to install and configure it.
 
 ## Version
 
+* 2024-03-08 v1.5 - Rewrote plugin to work with IDA Pro, Ghidra, and Binary Ninja at once.
 * 2024-02-21 v1.4 - Addressing issues with log file writing.
 * 2024-02-13 v1.3 - Web service now renders HTML results.
 * 2024-02-06 v1.2 - Proper decoding of `/api/query/<needle>` when facing urlencoded path, added capability for `contains` queries

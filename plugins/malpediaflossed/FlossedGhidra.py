@@ -4,6 +4,7 @@
 
 from plugin.apis.GhidraApi import GhidraApi
 from plugin.gui.PluginGui import PluginGui
+import config
 
 import sys
 try:
@@ -16,7 +17,7 @@ class PluginWidget(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
 
         self.api_proxy = GhidraApi()
-        self.plugin_gui = PluginGui(self.api_proxy)
+        self.plugin_gui = PluginGui(self.api_proxy, config)
         self.setLayout(self.plugin_gui.layout)
 
 def run():

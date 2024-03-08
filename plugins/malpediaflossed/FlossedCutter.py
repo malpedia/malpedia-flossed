@@ -1,5 +1,6 @@
-from apis.CutterApi import CutterApi
-from gui.PluginGui import PluginGui
+from plugin.apis.CutterApi import CutterApi
+from plugin.gui.PluginGui import PluginGui
+import malpediaflossed.config as config
 
 import PySide2.QtWidgets as QtWidgets
 import cutter
@@ -19,7 +20,7 @@ class PluginWidget(cutter.CutterDockWidget):
         content.setLayout(self.plugin_gui.layout)
 
 
-class HyaraPlugin(cutter.CutterPlugin):
+class TemplatePlugin(cutter.CutterPlugin):
     name = "MalpediaFlossed"
     description = "This plugin matches strings in the given target binary with data from malpedia-flossed.json"
     version = "1.0"

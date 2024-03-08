@@ -1,5 +1,6 @@
 from plugin.apis.IdaApi import IdaApi
 from plugin.gui.PluginGui import PluginGui
+import config
 
 import idaapi
 import ida_nalt
@@ -32,7 +33,7 @@ class PluginWidget(ida_kernwin.PluginForm):
     def OnCreate(self, form):
         self.parent = self.FormToPyQtWidget(form)
         self.api_proxy = IdaApi()
-        self.plugin_gui = PluginGui(self.api_proxy)
+        self.plugin_gui = PluginGui(self.api_proxy, config)
         self.parent.setLayout(self.plugin_gui.layout)
 
         # context menu extensions / actions need to be registered here
@@ -50,9 +51,9 @@ class PluginWidget(ida_kernwin.PluginForm):
         idaapi.unregister_action("TODO_IDA_ACTION_NAME")
         hooks.unhook()
 
-    def Show(self):
+    def Show(self, plugin_name="MalpediaFlossedPlugin"):
         if ida_nalt.retrieve_input_file_md5() is not None:
-            return ida_kernwin.PluginForm.Show(self, "MalpediaFlossedPlugin", options=(ida_kernwin.PluginForm.WCLS_CLOSE_LATER | ida_kernwin.PluginForm.WOPN_RESTORE | ida_kernwin.PluginForm.WCLS_SAVE))
+            return ida_kernwin.PluginForm.Show(self, plugin_name, options=(ida_kernwin.PluginForm.WCLS_CLOSE_LATER | ida_kernwin.PluginForm.WOPN_RESTORE | ida_kernwin.PluginForm.WCLS_SAVE))
         return None
 
 

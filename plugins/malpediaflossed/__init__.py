@@ -9,6 +9,7 @@ if IS_BINJA_ENV:
     # TODO adjust this to your plugin name
     from malpediaflossed.plugin.apis.BinaryNinjaApi import BinaryNinjaApi
     from malpediaflossed.plugin.gui.PluginGui import PluginGui
+    import malpediaflossed.config as config
 
     from binaryninjaui import DockHandler, DockContextHandler, UIActionHandler
     import PySide6.QtWidgets as QtWidgets
@@ -24,7 +25,7 @@ class PluginDockWidget(QtWidgets.QWidget, DockContextHandler):
         self.actionHandler.setupActionHandler(self)
 
         self.api_proxy = BinaryNinjaApi()
-        self.plugin_gui = PluginGui(self.api_proxy)
+        self.plugin_gui = PluginGui(self.api_proxy, config)
 
         self.setLayout(self.plugin_gui.layout)
 

@@ -15,36 +15,16 @@ if "idaapi" in modules:
     from PyQt5 import QtWidgets
     from PyQt5 import QtGui, QtCore
 else:
-    # We are running inside Cutter, Binary Ninja or Ghidra
+    # We are running inside Cutter, Ghidra
     try:
         import PySide2.QtWidgets as QtWidgets
         import PySide2.QtGui as QtGui
         import PySide2.QtCore as QtCore
     except:
+        # We are running inside Binary Ninja
         import PySide6.QtWidgets as QtWidgets
         import PySide6.QtGui as QtGui
         import PySide6.QtCore as QtCore
-
-
-
-
-# Define location for the FLOSSed file
-THIS_FILE_PATH = str(os.path.abspath(__file__))
-PROJECT_ROOT = str(os.path.abspath(os.sep.join([THIS_FILE_PATH, "..", "..", "..", "..", ".."])))
-FLOSSED_FILEPATH = os.sep.join([PROJECT_ROOT, "data", "malpedia_flossed.json"])
-# Run analysis immediately when plugin is started
-AUTO_ANALYZE = False
-# If you set FLOSSED_SERVICE, this will be used instead of the local file
-# e.g. use our hosted
-# FLOSSED_SERVICE = "https://strings.malpedia.io/api/query"
-# ... or if you have your own local setup
-# FLOSSED_SERVICE = "http://127.0.0.1:8000/api/query"
-# leaving this empty means local mode, i.e. loading the JSON specified above instead
-FLOSSED_SERVICE = "https://strings.malpedia.io/api/query"
-
-
-
-
 
 
 def csv_encode(list_of_strings):
@@ -53,10 +33,12 @@ def csv_encode(list_of_strings):
     writer.writerow(list_of_strings)
     return output.getvalue().strip()
 
+
 def filter_string(string):
     if re.match("^[ -~\t\r\n]+$", string):
         return string
     return ""
+
 
 def filter_strings(list_of_strings):
     cleaned_strings = []
@@ -64,6 +46,7 @@ def filter_strings(list_of_strings):
         if re.match("^[ -~\t\r\n]+$", string):
             cleaned_strings.append(string)
     return cleaned_strings
+
 
 def get_color_for_string(flossed_string):
     score_to_color = {
@@ -115,11 +98,12 @@ class NumberQTableWidgetItem(QtWidgets.QTableWidgetItem):
 
 class PluginGui():
 
-    def __init__(self, api_proxy) -> None:
+    def __init__(self, api_proxy, config) -> None:
         self.layout = QtWidgets.QVBoxLayout()
         self.api_proxy = api_proxy
+        self.config = config
         self._createGui()
-        if AUTO_ANALYZE:
+        if self.config.AUTO_ANALYZE:
             self._analyzeStrings()
 
     def _createGui(self):
@@ -191,10 +175,10 @@ class PluginGui():
 
     def _analyzeStrings(self):
         # do stuff
-        self.use_query_service = FLOSSED_SERVICE not in [None, ""]
+        self.use_query_service = self.config.FLOSSED_SERVICE not in [None, ""]
         if not self.use_query_service:
             print("No FLOSSed webservice specified.")
-            if os.path.exists(FLOSSED_FILEPATH):
+            if os.path.exists(self.config.FLOSSED_FILEPATH):
                 print("Loading FLOSSed JSON file.")
                 time.sleep(0.5)
                 self.load_json()
@@ -261,7 +245,7 @@ class PluginGui():
 
     def load_json(self):
         flossed_dict = {}
-        with open(FLOSSED_FILEPATH, "r") as fin:
+        with open(self.config.FLOSSED_FILEPATH, "r") as fin:
             flossed_dict = json.load(fin)
         # translate family_ids to families
         self._family_id_to_family = {value: key for key, value in flossed_dict["family_to_id"].items()}
@@ -308,7 +292,7 @@ class PluginGui():
             if len(filtered_strings) == 0:
                 print("It seems we have not found any queriable strings, so we have to abort.")
                 return flossed_strings
-            response = requests.post(FLOSSED_SERVICE, data=csv_encode(filtered_strings))
+            response = requests.post(self.config.FLOSSED_SERVICE, data=csv_encode(filtered_strings))
             if response.status_code == 200:
                 for entry in response.json()["data"]:
                     self.info_by_string[entry["string"]] = entry if entry["matched"] else {}
