@@ -4,9 +4,9 @@ This repository contains the result of the [FLARE FLOSS tool](https://github.com
 
 We intend to update this collection periodically.
 
-In the last run in January 2024, 8.522 files associated with 1.845 malware families were processed.  
-FLOSSing resulted in 44.666.177 raw strings, which were cleaned and deduplicated down to 3.835.990 unique strings.  
-Once decompressed, the collection currently sits at about 900 MB.
+In the last run in January 2026, 9.202 files associated with 2.136 malware families were processed.  
+FLOSSing resulted in 61.135.522 raw strings, which were cleaned and deduplicated down to 5.666.515 unique strings.  
+Once decompressed, the collection currently sits at about 1300 MB.
 
 ## Data Format
 
@@ -21,18 +21,20 @@ In short, the data looks like this:
 {
  "about": {
   "author": "Daniel Plohmann // daniel.plohmann<at>fkie.fraunhofer.de",
-  "date_flossed": "2024-01-19",
-  "date_published": "2024-01-30",
+  "date_flossed": "2026-01-06",
+  "date_published": "2026-01-06",
   "floss_version": "floss v3.0.1-0-g3782dc9",
   "info": "This collection contains the output of applying the FLARE team's floss tool to all unpacked+dumped samples in Malpedia, with additional information in which families the respective string was found, along with its extraction method and encoding. Processing has been applied to reduce the number of mistakenly extracted data strings with no real value to further analysis, FLOSS QUANTUMSTRAND and own tagging has been applied to enrich the output.",
   "license": "Creative Commons BY-SA 4.0",
-  "num_malware_families": 1845,
-  "num_processed_strings": 3835990,
-  "num_samples_flossed": 8522,
-  "num_tagged_strings": 1599459,
-  "num_total_strings": 44666177,
+  "num_input_strings": 61135522,
+  "num_filtered_input_strings": 26844200,
+  "num_malware_families": 2136,
+  "num_samples_flossed": 9202,
+  "num_tagged_strings": 2421776,
+  "num_unique_strings": 5666515,
   "reference": "malpedia.caad.fkie.fraunhofer.de/",
   "source": "https://github.com/malpedia/malpedia-flossed"
+
  },
  "family_to_id": {
   "elf.anchor_dns": 1121,
@@ -115,6 +117,7 @@ By default, the public [strings.malpedia.io](https://strings.malpedia.io) instan
 
 ## Version
 
+* 2026-01-06 v1.7 - Third Release of FLOSSed file (underlying data set snapshot: 2025-12-19)
 * 2025-03-14 v1.6 - Added a Kesakode plugin for Malcat.
 * 2024-03-08 v1.5 - Rewrote plugin to work with IDA Pro, Ghidra, and Binary Ninja at once.
 * 2024-02-21 v1.4 - Addressing issues with log file writing.
